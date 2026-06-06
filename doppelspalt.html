@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doppelspalt-Experiment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            padding: 18px;
+            color: #222;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+            border: 1px solid #ececec;
+        }
+        .header {
+            background: transparent;
+            color: #2c3e50;
+            padding: 22px 24px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .header h1 { font-family: 'Playfair Display', 'Inter', sans-serif; font-size: 26px; margin-bottom: 6px; color: #2c3e50; }
+        .header p { font-size: 13px; opacity: 0.8; color: #555; }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        @media (max-width: 768px) {
+            .content { grid-template-columns: 1fr; }
+            .header { padding: 20px; }
+            .header h1 { font-size: 22px; }
+        }
+        .visualization { border: 1px solid #eee; border-radius: 4px; overflow: hidden; background: #ffffff; min-height: 300px; display: flex; align-items: center; justify-content: center; }
+        canvas { display: block; width: 100%; max-width: 100%; height: auto; background: #ffffff; }
+        .info {
+            display: flex;
+            flex-direction: column;
+        }
+        .info h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        .info p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #666;
+        }
+        .controls { background: #fcfcfc; padding: 12px; border-radius: 4px; margin-bottom: 15px; }
+        .control-group {
+            margin-bottom: 12px;
+        }
+        .control-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #555;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+        button { background: #2c3e50; color: white; border: none; padding: 9px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; transition: background 0.12s; width: 100%; }
+        button:hover { background: #253746; }
+        button:active { background: #1b2933; }
+        .legend {
+            font-size: 12px;
+            color: #888;
+            margin-top: 15px;
+        }
+        .legend-item {
+            margin: 5px 0;
+        }
+        .color-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .footer { background: transparent; padding: 18px 24px; border-top: 1px solid #f5f5f5; font-size: 12px; color: #888; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Doppelspalt-Experiment</h1>
+            <p>Interferenz und Quantenmechanik visualisiert</p>
+        </div>
+        <div class="content">
+            <div class="visualization">
+                <canvas id="canvas"></canvas>
+            </div>
+            <div class="info">
+                <div>
+                    <h2>Was passiert hier?</h2>
+                    <p>Photonen werden von einer Quelle durch zwei Spalten geschickt. Auf dem Schirm entsteht ein Interferenzmuster — dort, wo sich die Wellen verstärken, entstehen helle Streifen, wo sie sich auslöschen, dunkle.</p>
+                    <p><strong>Die blauen Punkte</strong> sind einzelne Photonen-Treffer auf dem Schirm. Mit der Zeit bildet sich das theoretische Intensitätsmuster (schwarze Kurve) ab.</p>
+                </div>
+                <div class="controls">
+                    <h2 style="margin-bottom: 15px; color: #667eea;">Parameter</h2>
+                    <div class="control-group">
+                        <label>Spaltbreite: <span id="slitLabel">0.12</span></label>
+                        <input type="range" id="slitWidth" min="0.05" max="0.3" step="0.05" value="0.12">
+                    </div>
+                    <div class="control-group">
+                        <label>Photonen pro Frame: <span id="photonsLabel">10</span></label>
+                        <input type="range" id="photonsPerFrame" min="2" max="50" step="2" value="10">
+                    </div>
+                    <button onclick="resetSimulation()">Zurücksetzen</button>
+                </div>
+                <div class="legend">
+                    <h2 style="color: #667eea; margin-bottom: 10px; font-size: 14px;">Legende</h2>
+                    <div class="legend-item"><span class="color-dot" style="background: cyan;"></span> Photon-Spur</div>
+                    <div class="legend-item"><span class="color-dot" style="background: blue;"></span> Treffer am Schirm</div>
+                    <div class="legend-item"><span class="color-dot" style="background: black;"></span> Theoretisches Muster</div>
+                    <div class="legend-item"><span class="color-dot" style="background: saddlebrown;"></span> Wand mit Spalten</div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            © 2026 Doppelspalt-Experiment | Eigentümer: Berat | <a href="#" onclick="showLicense(); return false;" style="color: #667eea; text-decoration: none;">Lizenz anzeigen</a>
+        </div>
+    </div>
+    <div style="max-width:900px;margin:14px auto 40px;padding:0 18px;color:#444;font-size:13px;">
+        <h3 style="font-family:'Playfair Display', 'Inter', sans-serif;margin-bottom:8px;color:#2c3e50;">Quellen & Weiterführende Links</h3>
+        <ul style="margin-left:18px;line-height:1.6;">
+            <li><a href="http://www.feynmanlectures.caltech.edu/III_01.html" target="_blank" rel="noopener">Feynman Lectures on Physics — Caltech</a> — Einführung in Wellen und Interferenz.</li>
+            <li><a href="https://ocw.mit.edu/courses/8-04-quantum-physics-i-spring-2013/" target="_blank" rel="noopener">MIT OpenCourseWare: Quantum Physics I (8.04)</a> — Vorlesungsunterlagen und Notizen.</li>
+            <li><a href="https://arxiv.org/search/?query=double+slit&searchtype=all" target="_blank" rel="noopener">arXiv Suche: "double slit"</a> — Preprints und Forschungsartikel.</li>
+            <li><a href="https://www.nature.com/search?q=double+slit" target="_blank" rel="noopener">Nature Suche: Double slit</a> — Artikel und Experimente in renommierten Journalen.</li>
+        </ul>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const cfg = {
+            screenDistance: 6,
+            slitCenter: 0.6,
+            slitWidth: 0.12,
+            screenSize: 4,
+            photonsPerFrame: 10,
+            traceSpeed: 0.04,
+            bins: 100
+        };
+
+        let accum = [];
+        let hits = [];
+        let traces = [];
+        let running = true;
+
+        function resizeCanvas() {
+            const w = canvas.parentElement.clientWidth || 400;
+            const h = Math.max(300, Math.round(w * 0.55));
+            canvas.width = w;
+            canvas.height = h;
+            draw();
+        }
+
+        function reset() {
+            accum = new Array(cfg.bins).fill(0);
+            hits = [];
+            traces = [];
+            draw();
+        }
+
+        function sampleY() {
+            const bin = Math.floor(Math.random() * cfg.bins);
+            const y = -cfg.screenSize + (bin / cfg.bins) * 2 * cfg.screenSize;
+            const slit = Math.random() < 0.5 ? -cfg.slitCenter : cfg.slitCenter;
+            const sy = slit + (Math.random() - 0.5) * cfg.slitWidth;
+            return { y, sy };
+        }
+
+        function worldToScreen(x, y) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const sx = (x + 8) / (cfg.screenDistance + 9) * w;
+            const sy = (1 - (y + cfg.screenSize) / (2 * cfg.screenSize)) * h;
+            return { sx, sy };
+        }
+
+        function draw() {
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const wallX = worldToScreen(0, 0).sx;
+            ctx.fillStyle = 'saddlebrown';
+            const slit1Top = worldToScreen(0, -cfg.slitCenter - cfg.slitWidth/2).sy;
+            const slit1Bot = worldToScreen(0, -cfg.slitCenter + cfg.slitWidth/2).sy;
+            const slit2Top = worldToScreen(0, cfg.slitCenter - cfg.slitWidth/2).sy;
+            const slit2Bot = worldToScreen(0, cfg.slitCenter + cfg.slitWidth/2).sy;
+            ctx.fillRect(wallX - 6, 0, 12, slit1Top);
+            ctx.fillRect(wallX - 6, slit1Bot, 12, slit2Top - slit1Bot);
+            ctx.fillRect(wallX - 6, slit2Bot, 12, h - slit2Bot);
+
+            const screenX = worldToScreen(cfg.screenDistance, 0).sx;
+            ctx.strokeStyle = 'gray';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(screenX, 0); ctx.lineTo(screenX, h); ctx.stroke();
+
+            const src = worldToScreen(-8, 0);
+            ctx.fillStyle = 'cyan'; ctx.beginPath(); ctx.arc(src.sx, src.sy, 4, 0, Math.PI*2); ctx.fill();
+
+            
+            ctx.strokeStyle = 'black'; ctx.lineWidth = 1.2; ctx.beginPath();
+            for (let i = 0; i < accum.length; i++) {
+                const y = -cfg.screenSize + (i / accum.length) * 2 * cfg.screenSize;
+                const pos = worldToScreen(cfg.screenDistance, y);
+                const val = accum[i] ? accum[i] / (Math.max(...accum) || 1) : 0;
+                const x = screenX + 20 * val;
+                if (i === 0) ctx.moveTo(x, pos.sy); else ctx.lineTo(x, pos.sy);
+            }
+            ctx.stroke();
+
+            ctx.fillStyle = 'blue';
+            for (let i = 0; i < hits.length; i++) {
+                const p = worldToScreen(cfg.screenDistance, hits[i]);
+                ctx.beginPath(); ctx.arc(p.sx, p.sy, 3, 0, Math.PI*2); ctx.fill();
+            }
+
+            ctx.fillStyle = 'cyan';
+            for (let i = 0; i < traces.length; i++) {
+                const t = traces[i];
+                ctx.beginPath(); ctx.arc(t.sx, t.sy, 2, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        function step() {
+            for (let i = 0; i < cfg.photonsPerFrame; i++) {
+                const s = sampleY();
+                traces.push({ x0: -8, y0: 0, x1: 0, y1: s.sy, x2: cfg.screenDistance, y2: s.y, t: 0 });
+            }
+
+            const toRemove = [];
+            for (let i = 0; i < traces.length; i++) {
+                const tr = traces[i];
+                tr.t += cfg.traceSpeed;
+                if (tr.t >= 1) {
+                    hits.push(tr.y2);
+                    const bin = Math.floor(((tr.y2 + cfg.screenSize) / (2*cfg.screenSize)) * cfg.bins);
+                    if (bin >= 0 && bin < cfg.bins) accum[bin]++;
+                    toRemove.push(i);
+                } else {
+                    let x,y;
+                    if (tr.t < 0.5) {
+                        const tt = tr.t / 0.5;
+                        x = (1-tt)*tr.x0 + tt*tr.x1; y = (1-tt)*tr.y0 + tt*tr.y1;
+                    } else {
+                        const tt = (tr.t-0.5)/0.5;
+                        x = (1-tt)*tr.x1 + tt*tr.x2; y = (1-tt)*tr.y1 + tt*tr.y2;
+                    }
+                    const p = worldToScreen(x, y);
+                    tr.sx = p.sx; tr.sy = p.sy;
+                }
+            }
+            for (let i = toRemove.length-1; i >= 0; i--) traces.splice(toRemove[i],1);
+
+            draw();
+            if (running) requestAnimationFrame(step);
+        }
+
+        function resetSimulation() { running = false; reset(); running = true; step(); }
+
+        document.getElementById('slitWidth').addEventListener('input', function(e){ cfg.slitWidth = parseFloat(e.target.value); document.getElementById('slitLabel').textContent = cfg.slitWidth.toFixed(2); resetSimulation(); });
+        document.getElementById('photonsPerFrame').addEventListener('input', function(e){ cfg.photonsPerFrame = parseInt(e.target.value,10); document.getElementById('photonsLabel').textContent = cfg.photonsPerFrame; });
+
+        function showLicense(){ alert('Doppelspalt-Experiment\nEigentümer: Berat\n© 2026 Berat'); }
+
+        window.addEventListener('resize', resizeCanvas);
+        document.addEventListener('DOMContentLoaded', function(){ resizeCanvas(); reset(); step(); });
+    </script>
+</body>
+</html>
