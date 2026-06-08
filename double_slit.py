@@ -61,7 +61,7 @@ ax0.set_ylim(-screen_size*1.1, screen_size*1.1)
 ax0.set_aspect('equal')
 ax0.axis('off')
 
-wall_thickness = 0.5
+wall_thickness = 0.25
 ax0.add_patch(Rectangle((slit_plane_x - wall_thickness, -screen_size*1.2), wall_thickness, screen_size*2.4, color='saddlebrown'))
 ax0.add_patch(Rectangle((slit_plane_x - wall_thickness, slit1_y + slit_width/2), wall_thickness*0.9, screen_size*1.2 - (slit1_y + slit_width/2), color='saddlebrown'))
 ax0.add_patch(Rectangle((slit_plane_x - wall_thickness, -screen_size*1.2), wall_thickness*0.9, (slit1_y - slit_width/2) + screen_size*1.2, color='saddlebrown'))
