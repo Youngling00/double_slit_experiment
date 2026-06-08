@@ -1,38 +1,38 @@
-# Python
+Python
 __pycache__/
 *.py[cod]
 *$py.class
 
-# virtual environments
+virtual environments
 venv/
 .env/
 .venv/
 
-# distribution / packaging
+distribution / packaging
 build/
 dist/
 *.egg-info/
 
-# IDE/editor files
+IDE/editor files
 .vscode/
 .idea/
 *.swp
 
-# local files
+local files
 *.zip
 *.log
 
-# Jupyter Notebook
+ Jupyter Notebook
 .ipynb_checkpoints/
 
-# coverage
+ coverage
 .coverage
 .coverage.*
 .pytest_cache/
 
-# Byte-compiled / optimized
+Byte-compiled / optimized
 *.pyc
 
-# OS files
+OS files
 .DS_Store
 Thumbs.db
