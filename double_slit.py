@@ -78,7 +78,7 @@ detected = []
 moving = []
 
 
-running = False
+running = True
 
 line_theo, = ax1.plot(screen_y, intensity / intensity.max(), color='black')
 ax1.set_xlabel('Schirm Y')
